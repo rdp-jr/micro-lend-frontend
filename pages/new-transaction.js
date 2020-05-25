@@ -9,77 +9,161 @@ import moment from 'moment'
 
 const NewTransaction = ({borrowers}) => {
 
-  // console.log(borrowers)
-
-
   const { register, handleSubmit, watch, errors } = useForm();
   const [error, setError] = useState()
-  const [day, setDay] = useState('01')
-  const getReleaseDate = () => {
-    let month = '12'
-    // let day = '15'
-    return `${moment().format('YYYY')}-${month}-${day}`
+  
+  const currMoment = moment()
+
+  let releaseDate = moment()
+  if (releaseDate.date() >= 1 && releaseDate.date() < 16) {
+    releaseDate.date(15)
+  } else {
+    releaseDate.add(1, "months").date(1)
   }
 
-  const handleDayClick = (parameter) => (event) => {
-    event.preventDefault()
-    setDay(parameter)
+  const [rDate, setRDate] = useState(releaseDate)
+  const [borrower, setBorrower] = useState(null)
+  
+  const getSchedules = () => {
+    
+    let schedules = []
+    if (rDate.date() === 1) {
+      let first = rDate.clone().date(15)
+      let second = rDate.clone().add(1, 'months')
+      let third = rDate.clone().add(1, 'months').date(15)
+      let fourth = rDate.clone().add(2, 'months')
+      
+      schedules = [first, second, third, fourth]
 
+    } else {
+     
+      let first = rDate.clone().add(1, 'months').date(1)
+      let second = rDate.clone().add(1, 'months').date(15)
+      let third = rDate.clone().add(2, 'months').date(1)
+      let fourth = rDate.clone().add(2, 'months').date(15)
+
+      schedules = [first, second, third, fourth]
+      
+    }
+
+   
+    return schedules
+    
   }
+  const handleSelect = selectedOption => {
+    setBorrower(selectedOption)
+  }
+
+  const handleDayClick = e => {
+    e.preventDefault()
+    
+    const value = e.target.value
+   
+    if (rDate.date() !== parseInt(value)) {
+      setRDate(prevState => prevState.clone().date(value))
+    }
+  }
+
+  const handleMonthClick = e => {
+    e.preventDefault()
+    const value = e.target.value
+    
+    if (currMoment.month() === parseInt(value)) {
+      
+
+      if (currMoment.date() > 1 && currMoment.date() < 16) {
+        setRDate(prevState => prevState.clone().month(value).date(15))
+      }
+    }
+
+    else if (rDate.month() !== parseInt(value)) {
+      setRDate(prevState => prevState.clone().month(value))
+    }
+  }
+  
   const onSubmit = data => {
+    data['schedules'] = getSchedules().map(schedule => schedule.format('YYYY-MM-DD'))
+    data['borrower'] = borrower['value']
+      // getSchedules().map(schedule => (<li key={Math.random()}>{schedule.format('LL')}</li>))
+    
     console.log(data)
-    // const API_URL = "http://localhost:1337";
 
-    // fetch(`${API_URL}/transactions`, {
-    //   method: "POST",
-    //   body: JSON.stringify(data),
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    // }).then(response => {
-    //   console.log(response)
-    //   if (response.status === 500) {
-    //     console.log('fail!')
-    //     // setError('Error. Contact Number already exists in the database.')
-    //   } else if (response.status === 200) {
-    //     console.log('success!')
-    //     // Router.push("/borrowers");
-    //   }
-    // });
+    const API_URL = "http://localhost:1337";
+
+    fetch(`${API_URL}/transactions`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then(response => {
+      console.log(response)
+      if (response.status === 500) {
+        console.log('fail!')
+        // setError('Error. Contact Number already exists in the database.')
+      } else if (response.status === 200) {
+        console.log('success!')
+        Router.push("/transactions");
+      }
+    });
 
   };
+
+  
 
   const borrowerOptions = borrowers.map(borrower => (
     {value: { ...borrower }, label: borrower.name }
   ))
-  // console.log(borrowerOptions)
-  const options = [
-    { value: 'chocolate', label: 'Chocolate' },
-    { value: 'strawberry', label: 'Strawberry' },
-    { value: 'vanilla', label: 'Vanilla' }
-  ]
+
+  const getButtonClassName = (num) => {
+    return `btn btn-primary ${rDate.month() === num ? "active" : ""}`
+  }
+
+  const getButtonClassNameDate = (num) => {
+    return `btn btn-primary ${rDate.date() === num ? "active" : ""}`
+  }
+
+  const getButtonDisableFlag = (num) => {
+    if (currMoment.isSame(moment(num + 1, 'MM'), 'month')) {
+      return currMoment.date() >= 16
+    }
+    return currMoment.isAfter(moment(num + 1, 'MM'))
+  }
+
+  const getButtonDisableFlagDate = () => {
+    if (currMoment.isSame(rDate, 'month')) {
+      return currMoment.date() > 1 
+    }
+    
+    return false
+  }
+
   return (
     <Layout>
     <div className="container">
+    
+    <h1>{currMoment.format('LL')}</h1>
+    
+    <h1>{rDate.format('LL')}</h1>
     <h1>New Transaction</h1>
     <form onSubmit={handleSubmit(onSubmit)}>
 
     <div className="form-group">
     <label htmlFor="amount_borrowed">Amount to Borrow</label>
-    <input type="number" className="form-control" name="amount_borrowed" placeholder="Amount" ref={register({ required: true })} />
+    <input type="number" className="form-control" name="amount_borrowed" placeholder="Amount" step="1000" ref={register({ required: true })} />
     {errors.amount_borrowed && <span>This field is required</span>}
     </div>
     
 
     <div className="form-group">
     <label htmlFor="interest_rate">Interest Rate</label>
-    <input className="form-control" name="interest_rate" placeholder="Interest Rate" ref={register({ required: true })} />
+    <input type="number" className="form-control" name="interest_rate" placeholder="Interest Rate" ref={register({ required: true })} />
     {errors.interest_rate && <span>This field is required</span>}
     </div>
 
     <div className="form-group">
     <label htmlFor="borrower">Borrower</label>
-    <Select options={borrowerOptions} name="borrower"/>
+    <Select options={borrowerOptions} name="borrower" instanceId={1} className="z-above" value={borrower} onChange={handleSelect}/>
     
     {errors.borrower && <span>This field is required</span>}
     </div>
@@ -87,86 +171,45 @@ const NewTransaction = ({borrowers}) => {
     <div className="form-group">
     <label htmlFor="release_date">Release Date</label>
 
-   
-    <p>{moment(getReleaseDate(), "YYYY-MM-DD").format('LL')}</p>
+      <div className="btn-group mr-2" role="group">
+        <button  onClick={handleMonthClick} value={0} className={getButtonClassName(0)} disabled={getButtonDisableFlag(0)}>Jan</button>
+        <button onClick={handleMonthClick} value={1} className={getButtonClassName(1)} disabled={getButtonDisableFlag(1)}>Feb</button>
+        <button onClick={handleMonthClick} value={2} className={getButtonClassName(2)} disabled={getButtonDisableFlag(2)}>Mar</button>
+        <button onClick={handleMonthClick} value={3} className={getButtonClassName(3)} disabled={getButtonDisableFlag(3)}>Apr</button>
+      </div>
+
+      <div className="btn-group mr-2" role="group">
+        <button onClick={handleMonthClick} value={4} className={getButtonClassName(4)} disabled={getButtonDisableFlag(4)}>May</button>
+        <button onClick={handleMonthClick} value={5} className={getButtonClassName(5)} disabled={getButtonDisableFlag(5)}>Jun</button>
+        <button onClick={handleMonthClick} value={6} className={getButtonClassName(6)} disabled={getButtonDisableFlag(6)}>Jul</button>
+        <button onClick={handleMonthClick} value={7} className={getButtonClassName(7)} disabled={getButtonDisableFlag(7)}>Aug</button>
+      </div>
+
+      <div className="btn-group mr-2" role="group">
+        <button onClick={handleMonthClick} value={8} className={getButtonClassName(8)} disabled={getButtonDisableFlag(8)}>Sep</button>
+        <button onClick={handleMonthClick} value={9} className={getButtonClassName(9)} disabled={getButtonDisableFlag(9)}>Oct</button>
+        <button onClick={handleMonthClick} value={10} className={getButtonClassName(10)} disabled={getButtonDisableFlag(10)}>Nov</button>
+        <button onClick={handleMonthClick} value={11} className={getButtonClassName(11)} disabled={getButtonDisableFlag(11)}>Dec</button>
+      </div>
+
+    
 
     <div className="btn-group" role="group">
-      <button className="btn btn-primary">Jan</button>
-      <button className="btn btn-primary">Feb</button>
-      <button className="btn btn-primary">Mar</button>
-      <button className="btn btn-primary">Apr</button>
-
-
-      <div className="btn-group" role="group">
-      <button className="btn btn-primary">Jan</button>
-      <button className="btn btn-primary">Feb</button>
-      <button className="btn btn-primary">Mar</button>
-      <button className="btn btn-primary">Apr</button>
-
-      <div className="dropdown-menu">
-      <button className="btn btn-primary">Jan</button>
-      <button className="btn btn-primary">Feb</button>
-      <button className="btn btn-primary">Mar</button>
-      <button className="btn btn-primary">Apr</button>
+      <button onClick={handleDayClick} value={1} className={getButtonClassNameDate(1)} disabled={getButtonDisableFlagDate()}>1</button>
+      <button onClick={handleDayClick} value={15} className={getButtonClassNameDate(15)}>15</button>
     </div>
-
-    </div>
-
-
-    
-
-    </div>
-
-    
-    <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-  <button type="button" class="btn btn-secondary">1</button>
-  <button type="button" class="btn btn-secondary">2</button>
-
-  <div className="btn-group" role="group">
-    <button id="btnGroupDrop1" type="button" className="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      Dropdown
-    </button>
-
-    <div className="dropdown-menu" aria-labelledby="btnGroupDrop1">
-      {/* <a className="dropdown-item" href="#">Dropdown link</a>
-      <a className="dropdown-item" href="#">Dropdown link</a> */}
-      <button className="dropdown-item  btn-primary">Jan</button>
-      <button className="dropdown-item btn btn-primary">Feb</button>
-      <button className="dropdown-item btn btn-primary">Mar</button>
-      <button className="dropdown-item btn btn-primary">Apr</button>
-
-      {/* <button className="btn btn-primary">Jan</button>
-      <button className="btn btn-primary">Feb</button>
-      <button className="btn btn-primary">Mar</button>
-      <button className="btn btn-primary">Apr</button>
-
-      <button className="btn btn-primary">Jan</button>
-      <button className="btn btn-primary">Feb</button>
-      <button className="btn btn-primary">Mar</button>
-      <button className="btn btn-primary">Apr</button> */}
-    </div>
-    
-  </div>
-
-  
-
-</div>
-
-  
-
-
-    <button onClick={handleDayClick('01')} className={day === "01" ? "btn btn-primary active" : "btn btn-primary"}>1</button>
-    <button onClick={handleDayClick('15')} className={day === "15" ? "btn btn-primary active" : "btn btn-primary"}>15</button>
-
-    <input name="release_date" hidden defaultValue={getReleaseDate()} ref={register({ required: true })}/>
-    
-    {errors.release_date && <span>This field is required</span>}
+      <input name="release_date" readOnly defaultValue={rDate.format('YYYY-MM-DD')} ref={register({ required: true })} hidden/>
+      
+      {errors.release_date && <span>This field is required</span>}
+      
     </div>
 
     <div className="form-group">
     <label htmlFor="schedules">Schedules</label>
-    {/* <input className="form-control" name="schedules" placeholder="Sc" ref={register({ required: true })} /> */}
-    {/* {errors.schedules && <span>This field is required</span>} */}
+    <ol>
+      {/* {getSchedules().map(schedule => (<li key={Math.random()}>{moment(schedule, "YYYY-MM-DD").format('LL')}</li>))} */}
+      {getSchedules().map(schedule => (<li key={Math.random()}>{schedule.format('LL')}</li>))}
+    </ol>
     </div>
 
     <p>{ error ? error : ''}</p>
