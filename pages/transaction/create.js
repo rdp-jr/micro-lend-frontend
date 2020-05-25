@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form'
-import Layout from "../components/Layout";
+import Layout from "../../components/Layout";
 import Head from 'next/head'
 import { useState } from 'react'
 import Router from "next/router";
@@ -82,7 +82,17 @@ const NewTransaction = ({borrowers}) => {
   }
   
   const onSubmit = data => {
-    data['schedules'] = getSchedules().map(schedule => schedule.format('YYYY-MM-DD'))
+    // data['schedules'] = getSchedules().map(schedule => {
+    //   schedule.format('YYYY-MM-DD')
+    // })
+    let obj = {}
+    const schedArr = getSchedules()
+    for (let i = 0; i < schedArr.length; i++) {
+      obj[schedArr[i].format('YYYY-MM-DD')] = false
+    }
+
+    data['schedules'] = obj
+
     data['borrower'] = borrower['value']
       // getSchedules().map(schedule => (<li key={Math.random()}>{schedule.format('LL')}</li>))
     
@@ -103,7 +113,7 @@ const NewTransaction = ({borrowers}) => {
         // setError('Error. Contact Number already exists in the database.')
       } else if (response.status === 200) {
         console.log('success!')
-        Router.push("/transactions");
+        Router.push("/transaction/all");
       }
     });
 
@@ -172,7 +182,7 @@ const NewTransaction = ({borrowers}) => {
     <label htmlFor="release_date">Release Date</label>
 
       <div className="btn-group mr-2" role="group">
-        <button  onClick={handleMonthClick} value={0} className={getButtonClassName(0)} disabled={getButtonDisableFlag(0)}>Jan</button>
+        <button onClick={handleMonthClick} value={0} className={getButtonClassName(0)} disabled={getButtonDisableFlag(0)}>Jan</button>
         <button onClick={handleMonthClick} value={1} className={getButtonClassName(1)} disabled={getButtonDisableFlag(1)}>Feb</button>
         <button onClick={handleMonthClick} value={2} className={getButtonClassName(2)} disabled={getButtonDisableFlag(2)}>Mar</button>
         <button onClick={handleMonthClick} value={3} className={getButtonClassName(3)} disabled={getButtonDisableFlag(3)}>Apr</button>

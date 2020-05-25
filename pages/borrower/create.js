@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form'
-import Layout from "../components/Layout";
+import Layout from "../../components/Layout";
 import Head from 'next/head'
 import { useState } from 'react'
 import Router from "next/router";
