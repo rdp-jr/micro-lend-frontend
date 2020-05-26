@@ -1,6 +1,7 @@
 import Layout from '../../components/Layout'
 // import fetch from 'isomorphic-unfetch'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 
 const Borrower = (props) => {
   const { name, contact_number, address, transactions } = props
@@ -10,7 +11,10 @@ const Borrower = (props) => {
     <h1>{name}</h1>
     <h2>{contact_number}</h2>
     <h2>{address}</h2>
-    <h3>{transactions && transactions.map(transaction => (<h3>{transaction.amount_borrowed}</h3>))}</h3>
+    <h3>{transactions && transactions.map(transaction => (<>
+    {transaction.amount_borrowed}
+    <Link href="/transaction/[id]" as={`/transaction/${transaction.id}`}><a>View</a></Link>
+    </>))}</h3>
     </div>
     </Layout>
   )

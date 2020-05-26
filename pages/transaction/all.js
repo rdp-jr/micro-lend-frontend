@@ -10,6 +10,12 @@ const Transactions = ({transactions}) => {
   //   Object.entries(transaction.schedules).forEach(([key, value]) => console.log(`${key}: ${value}`))
   // })
 
+  if (transactions.length == 0) {
+    return (
+      "No transactions"
+    )
+  }
+
   const data = React.useMemo(
     () => transactions.map(transaction => ({colId: transaction.id, 
       colAmountBorrowed: transaction.amount_borrowed, colInterestRate: transaction.interest_rate,

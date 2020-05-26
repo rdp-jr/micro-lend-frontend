@@ -1,15 +1,17 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import Layout from "../../components/Layout";
 import Head from 'next/head'
 import { useState } from 'react'
 import Router from "next/router";
 import Select from 'react-select'
 import moment from 'moment'
+import Cleave from 'cleave.js/react'
+import numeral from 'numeral'
 
 
 const NewTransaction = ({borrowers}) => {
 
-  const { register, handleSubmit, watch, errors } = useForm();
+  const { register, handleSubmit, watch, errors, control } = useForm();
   const [error, setError] = useState()
   
   const currMoment = moment()
@@ -84,6 +86,8 @@ const NewTransaction = ({borrowers}) => {
   const onSubmit = data => {
     // data['schedules'] = getSchedules().map(schedule => {
     //   schedule.format('YYYY-MM-DD')
+    data['amount_borrowed'] = numeral(data['amount_borrowed']).value()
+    console.log(data)
     // })
     let obj = {}
     const schedArr = getSchedules()
@@ -160,7 +164,17 @@ const NewTransaction = ({borrowers}) => {
 
     <div className="form-group">
     <label htmlFor="amount_borrowed">Amount to Borrow</label>
-    <input type="number" className="form-control" name="amount_borrowed" placeholder="Amount" step="1000" ref={register({ required: true })} />
+    
+    <Controller as={<Cleave options={{ numeral: true, numeralThousandsGroupStyle: 'thousand'}}/>}
+      className="form-control"
+      control={control}
+      rules={{ required: true }}
+      name="amount_borrowed"
+      defaultValue="Amount"
+      autoComplete="off"
+    />
+
+    {/* <input type="number" className="form-control" name="amount_borrowed" placeholder="Amount" step="1000" ref={register({ required: true })} /> */}
     {errors.amount_borrowed && <span>This field is required</span>}
     </div>
     

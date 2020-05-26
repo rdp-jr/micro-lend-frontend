@@ -5,11 +5,30 @@ import Link from 'next/link'
 import fetch from 'isomorphic-unfetch'
 import { useState } from 'react'
 import Router from "next/router";
+import moment from 'moment'
+import numeral from 'numeral'
 
 const Transaction = (props) => {
   const { amount_borrowed, interest_rate, schedules, release_date, borrower, id } = props
   const [transaction, setTransaction] = useState(props)
+  const totalPaymentPerQuarter = (parseInt(amount_borrowed) + (parseInt(amount_borrowed)*(parseInt(interest_rate)/100))) /4
+  const totalPrincipalPerQuarter = parseInt(amount_borrowed)/4
+  const totalInterestPerQuarter = (parseInt(amount_borrowed) * parseInt(interest_rate)/100)/4
 
+  const getStatus = () => {
+ 
+    const values = Object.values(schedules)
+    const test = x => x === true
+
+    if (values.every(test)) {
+      
+      return true
+    } else {
+     
+      return false
+    }
+    
+  }
 
   const handlePayClick = (e) => {
     e.preventDefault()
@@ -40,13 +59,43 @@ const Transaction = (props) => {
       }
     });
   }
+  // let status = true
+  
   return (
     <Layout>
     <div className="container">
-    <h1>Amount Borrowed: {amount_borrowed}</h1>
-    <h2>Interest Rate: {interest_rate}</h2>
-    <h2>Release Date: {release_date}</h2>
-    <h3>Borrower: <Link href="/borrower/[id]" as={`/borrower/${borrower.id}`}><a>{borrower.name}</a></Link></h3>
+
+    <dl className="row">
+      <dt className="col-sm-3"><h6>Transaction ID</h6></dt>
+      <dd className="col-sm-9"><h6>{id}</h6></dd>
+
+      <dt className="col-sm-3"><h3>Principal</h3></dt>
+      <dd className="col-sm-9"><h3>{numeral(amount_borrowed).format('0,0')}</h3></dd>
+
+      <dt className="col-sm-3"><h3>Interest Rate</h3></dt>
+      <dd className="col-sm-9"><h3>{interest_rate}%</h3></dd>
+
+      <dt className="col-sm-3"><h3>Release Date</h3></dt>
+      <dd className="col-sm-9"><h3>{moment(release_date).format('LL')}</h3></dd>
+
+      <dt className="col-sm-3"><h3>Payment Per Quarter</h3></dt>
+  <dd className="col-sm-9">
+    <dl className="row">
+      <dd className="col-sm-3"><h3>{numeral(totalPaymentPerQuarter).format('0,0')}</h3></dd>
+      <dd className="col-sm-3"><h3>{numeral(totalPrincipalPerQuarter).format('0,0')} <small className="text-muted">(Principal)</small></h3></dd>
+      <dd className="col-sm-3"><h3>{numeral(totalInterestPerQuarter).format('0,0')} <small className="text-muted">(Interest)</small></h3></dd>
+    </dl>
+  </dd>
+
+      <dt className="col-sm-3"><h3>Borrower</h3></dt>
+      <dd className="col-sm-9"><h3><Link href="/borrower/[id]" as={`/borrower/${borrower.id}`}><a>{borrower.name}</a></Link></h3></dd>
+
+      <dt className="col-sm-3"><h3>Status</h3></dt>
+      <dd className="col-sm-9"><h3> <span className={getStatus() ? "badge badge-success" : "badge badge-primary"}>{getStatus() ? "Matured" : "Open"}</span></h3></dd>
+
+
+    </dl>
+
     <h4>Schedules</h4>
     {/* <p>{Object.keys(transaction.schedules).map(key => (`${key}: ${transaction.schedules[key]}`) )}</p> */}
     {Object.keys(schedules).map(key => (<><p>{`${key}: ${schedules[key]}`}</p> <button onClick={handlePayClick} value={key}>Pay</button></>) )}
